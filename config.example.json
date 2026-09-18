@@ -1,0 +1,12 @@
+{
+  "dshRoot": "/absolute/path/to/your/dsh-installation",
+  "asrLanguage": "auto",
+  "voice": "zero_shot_zh",
+  "instructLanguage": "auto",
+  "instructText": "",
+  "recordTarget": "",
+  "playbackTarget": "",
+  "maxRecordingSeconds": 120,
+  "idleUnloadSeconds": 300,
+  "prebufferSentences": 2
+}

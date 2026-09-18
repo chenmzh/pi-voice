@@ -1,0 +1,25 @@
+{
+  "name": "pi-voice",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Pi Voice: local Qwen3-ASR input and CosyVoice 3 output for Pi, using an existing DSH voice backend",
+  "keywords": ["pi-package", "voice", "asr", "tts", "qwen3-asr", "cosyvoice"],
+  "repository": { "type": "git", "url": "https://github.com/chenmzh/pi-voice.git" },
+  "homepage": "https://github.com/chenmzh/pi-voice#readme",
+  "bugs": { "url": "https://github.com/chenmzh/pi-voice/issues" },
+  "pi": { "extensions": ["./index.ts"] },
+  "files": [
+    "index.ts", "extension.ts", "controller.ts", "backend.ts", "audio.ts",
+    "config.ts", "processes.ts", "pipeline.ts", "voices.ts",
+    "tools/voices.mjs", "README.md", "PRIVACY.md", "config.example.json"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:reload": "python3 tools/test-reload.py",
+    "check:privacy": "node tools/check-privacy.mjs"
+  },
+  "engines": { "node": ">=22.18" },
+  "peerDependencies": { "@earendil-works/pi-coding-agent": "*" },
+  "peerDependenciesMeta": { "@earendil-works/pi-coding-agent": { "optional": true } }
+}
