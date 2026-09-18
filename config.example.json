@@ -1,5 +1,5 @@
 {
-  "dshRoot": "/absolute/path/to/your/dsh-installation",
+  "backend": "native",
   "asrLanguage": "auto",
   "voice": "zero_shot_zh",
   "instructLanguage": "auto",

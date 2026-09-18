@@ -104,7 +104,7 @@ export class DshBackend {
   synthesize(text, signal) {
     return this.run('tts', signal, async (proc, modules) => {
       const instruct = modules.buildInstruct(this.config.instructLanguage, this.config.instructText);
-      const result = await proc.speak({ text, prepared: true, ...(instruct ? { instruct } : {}) });
+      const result = await proc.speak({ text, voice: this.config.voice, prepared: true, ...(instruct ? { instruct } : {}) });
       checkAbort(signal);
       if (!result.wav?.length) throw new Error(`CosyVoice 3 未生成音频: ${result.skipped || 'empty WAV'}`);
       return result;

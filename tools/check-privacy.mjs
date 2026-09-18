@@ -5,9 +5,11 @@ const allowed = new Set([
   '.gitignore', '.github/workflows/ci.yml', 'package.json',
   'README.md', 'PRIVACY.md', 'config.example.json',
   'index.ts', 'extension.ts', 'controller.ts', 'backend.ts', 'audio.ts',
-  'config.ts', 'processes.ts', 'pipeline.ts', 'voices.ts',
+  'config.ts', 'processes.ts', 'pipeline.ts', 'voices.ts', 'native.ts', 'shared.ts', 'server.ts', 'setup.ts',
+  'python/worker.py', 'python/requirements-asr.in', 'python/requirements-tts.in', 'python/build-constraints.in',
   'tests/audio.test.mjs', 'tests/controller.test.mjs', 'tests/pipeline-voices.test.mjs',
-  'tools/voices.mjs', 'tools/smoke.mjs', 'tools/test-reload.py', 'tools/check-privacy.mjs',
+  'tests/shared.test.mjs', 'tests/setup_test.py',
+  'tools/voices.mjs', 'tools/smoke.mjs', 'tools/test-reload.py', 'tools/check-privacy.mjs', 'tools/setup.py', 'tools/daemon.mjs',
 ]);
 const checks = [
   ['GitHub credential', /\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})\b/],

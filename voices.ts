@@ -1,8 +1,7 @@
 import { execFile } from 'node:child_process';
-import { mkdirSync, writeFileSync, unlinkSync, existsSync, statSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, unlinkSync, existsSync, statSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
-import { pathToFileURL } from 'node:url';
 import { checkAbort } from './processes.ts';
 
 export const REFERENCE_TEXT = '你好，这是我的声音。我希望用自然清晰的语气，朗读中文和日常对话。';
@@ -39,10 +38,19 @@ export function pcmWav(pcm) {
   return Buffer.concat([header, pcm]);
 }
 
+function scanReferences(dir) {
+  let names;
+  try { names = readdirSync(dir); } catch { return []; }
+  return names.filter(name => !name.startsWith('.') && /\.(wav|flac)$/i.test(name))
+    .filter(name => { try { return statSync(join(dir, name)).isFile(); } catch { return false; } })
+    .map(name => ({ id: join(dir, name), label: basename(name, extname(name)) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 export class VoiceLibrary {
   constructor(config, deps = {}) { this.config = config; this.scan = deps.scan; this.exec = deps.exec ?? execFile; }
   async list() {
-    this.scan ??= (await import(pathToFileURL(join(this.config.pluginDir, 'lib/core/ref-wavs.js')).href)).listRefWavs;
+    this.scan ??= scanReferences;
     return this.listSync();
   }
   // Pi argument completion is synchronous. Load the scanner at TUI startup,

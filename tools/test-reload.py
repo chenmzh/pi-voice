@@ -57,7 +57,7 @@ for name, content in sources.items():
 
 master, slave = pty.openpty()
 fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 45, 180, 0, 0))
-env = dict(os.environ, PI_CODING_AGENT_DIR=str(agent), PI_OFFLINE='1', PI_TELEMETRY='0', TERM='xterm-256color')
+env = dict(os.environ, PI_CODING_AGENT_DIR=str(agent), XDG_RUNTIME_DIR=str(root / 'runtime'), PI_OFFLINE='1', PI_TELEMETRY='0', TERM='xterm-256color')
 process = subprocess.Popen(['pi', '--offline', '--no-approve', '--no-context-files', '--no-skills', '--no-prompt-templates', '--no-session'], stdin=slave, stdout=slave, stderr=slave, env=env, cwd=root, start_new_session=True)
 os.close(slave)
 output = bytearray()
@@ -105,6 +105,8 @@ try:
     results['newSpeakHelp'] = b'/voice speak' in output[help_start:]
     if not results['newSpeakHelp']:
         raise RuntimeError('Updated help does not show /voice speak')
+    command('/voice setup', 'Pi Voice 安装引导', 'setupHelp')
+    command('/voice doctor', 'Pi Voice 环境检查', 'doctor')
     command('/voice speak', '当前分支没有可朗读的完整回复', 'speakDispatch')
     command('/voice voices', '预置: 默认中文', 'newController')
     os.write(master, b'/voice use ')

@@ -1,14 +1,16 @@
 import { loadConfig, configPath } from './config.ts';
-import { DshBackend } from './backend.ts';
+import { SharedBackend } from './shared.ts';
+import { setupHelp, doctor } from './setup.ts';
 import { VoiceController, assistantText, lastReply } from './controller.ts';
 import { safeMessage } from './processes.ts';
 
 export const HELP = [
-  'Pi Voice v0.3.0 · 帮助',
+  'Pi Voice v0.4.0 · 帮助',
+  '/voice setup：选择安装 ASR / TTS / 两者；/voice doctor：检查环境（不下载、不加载模型）',
   'Alt+M / /voice：开始录音；再按一次停止并转写（只填输入框，不发送）',
   'Alt+S / /voice speak / /speak：朗读当前分支最后一条完整回复',
   '/voice speak 文本（或 /speak 文本）：朗读指定文字',
-  'Alt+X / /voice stop：取消录音、识别、合成与播放，释放 Pi 自己的语音模型',
+  'Alt+X / /voice stop：取消本窗口任务并释放使用权，不中断其他窗口；模型由共享服务管理',
   '/voice auto on|off：本次会话自动朗读（默认关闭；只读最终回复）',
   '/voice voices：列出 Pi / DSH 音色；/voice use [名称]：选择并保存音色',
   '/voice use 后空格：补全现有音色（✓ 当前）；直接执行 /voice use：打开选择列表',
@@ -22,7 +24,7 @@ export default function registerVoice(pi, deps = {}) {
     if (controller || configError) return;
     try {
       const config = (deps.loadConfig ?? loadConfig)();
-      const backend = deps.backend ?? new DshBackend(config);
+      const backend = deps.backend ?? new SharedBackend(config);
       controller = new VoiceController(config, backend, deps);
     } catch (error) { configError = error; }
   };
@@ -76,13 +78,15 @@ export default function registerVoice(pi, deps = {}) {
         try { return controller?.library.completions(use[1] ?? '', controller.config.voice) ?? []; }
         catch { return []; } // A disappearing/unreadable directory must not break the editor.
       }
-      return ['help', 'speak', 'status', 'stop', 'unload', 'auto on', 'auto off', 'voices', 'use', 'clone', 'import']
+      return ['help', 'setup', 'doctor', 'speak', 'status', 'stop', 'unload', 'auto on', 'auto off', 'voices', 'use', 'clone', 'import']
         .filter(value => value.startsWith(prefix)).map(value => ({ value, label: value }));
     },
     handler: (args, ctx) => guard(ctx, async voice => {
       const arg = args.trim();
       if (!arg) return voice.toggleRecord(ctx);
       if (arg === 'help') return ctx.ui.notify(HELP, 'info');
+      if (arg === 'setup') return ctx.ui.notify(setupHelp(), 'info');
+      if (arg === 'doctor') return ctx.ui.notify(await doctor(voice.config), 'info');
       if (arg === 'voices') return voice.listVoices(ctx);
       const speech = /^speak(?:\s+([\s\S]*))?$/.exec(arg);
       if (speech) return voice.speak(ctx, speech[1]?.trim() || lastReply(ctx.sessionManager.getBranch()));
@@ -97,7 +101,9 @@ export default function registerVoice(pi, deps = {}) {
         candidate = ''; return voice.setAuto(ctx, arg === 'auto on');
       }
       if (arg === 'status') {
+        const service = await voice.backend.status?.();
         return ctx.ui.notify([
+          ...(service ? [`共享服务：${service.running ? `PID ${service.pid}；模型 ${service.active?.kind ?? '未加载'}；使用窗口 ${service.clients}；排队 ${service.queued}` : '未启动（按需启动）'}`] : []),
           `本地语音：${voice.job?.kind ?? '空闲'}；模型：${voice.backend.active?.kind ?? '未加载'}；自动朗读：${voice.autoRead ? '开' : '关'}`,
           `输入：Qwen3-ASR；输出：CosyVoice 3；音色：${voice.config.voice}`,
           `配置：${configPath()}（修改后 /reload）`,

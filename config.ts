@@ -17,6 +17,8 @@ export function loadConfig(path = configPath()) {
 export function resolveConfig(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('语音配置必须是 JSON 对象');
   const root = input.dshRoot ?? join(homedir(), 'deepseek_harness');
+  const backend = input.backend ?? (input.dshRoot || input.pluginDir ? 'dsh' : 'native');
+  const dataDir = input.dataDir ?? join(process.env.XDG_DATA_HOME || join(homedir(), '.local/share'), 'pi-voice');
   const config = {
     dshRoot: root,
     pluginDir: join(root, 'plugins/dsh-voice-draft'),
@@ -36,15 +38,25 @@ export function resolveConfig(input = {}) {
     prebufferSentences: 2,
     refsDir: join(dirname(configPath()), 'voice-refs'),
     dshRefsDir: join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'voice-refs'),
+    backend, dataDir,
+    ttsPython: join(dataDir, 'tts/venv/bin/python'),
+    cosyvoiceRepo: join(dataDir, 'cosyvoice'),
+    ttsModel: join(dataDir, 'models/cosyvoice3'),
+    wetextModel: join(dataDir, 'models/wetext'),
+    ...(backend === 'native' ? {
+      asrPython: join(dataDir, 'asr/venv/bin/python'),
+      asrModel: join(dataDir, 'models/qwen3-asr'),
+    } : {}),
     ...input,
   };
   // Validate the explicit schema, including unknown keys (typos must not be silent).
   const keys = ['dshRoot', 'pluginDir', 'asrPython', 'asrModel', 'ttsRoot', 'ttsModelsRoot',
     'textnormPath', 'asrLanguage', 'voice', 'instructLanguage', 'instructText',
     'recordTarget', 'playbackTarget', 'maxRecordingSeconds', 'idleUnloadSeconds',
-    'prebufferSentences', 'refsDir', 'dshRefsDir'];
+    'prebufferSentences', 'refsDir', 'dshRefsDir', 'backend', 'dataDir', 'ttsPython', 'cosyvoiceRepo', 'ttsModel', 'wetextModel'];
   for (const key of Object.keys(input)) if (!keys.includes(key)) throw new Error(`未知语音配置项: ${key}`);
-  for (const key of [...keys.slice(0, 7), 'refsDir', 'dshRefsDir']) {
+  if (!['native', 'dsh'].includes(config.backend)) throw new Error('backend 必须是 native 或 dsh');
+  for (const key of [...keys.slice(0, 7), 'refsDir', 'dshRefsDir', 'dataDir', 'ttsPython', 'cosyvoiceRepo', 'ttsModel', 'wetextModel']) {
     if (typeof config[key] !== 'string' || !isAbsolute(config[key])) throw new Error(`${key} 必须是绝对路径`);
   }
   for (const key of keys.slice(7, 13)) if (typeof config[key] !== 'string') throw new Error(`${key} 必须是字符串`);
